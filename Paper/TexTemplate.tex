@@ -1,0 +1,442 @@
+\documentclass[a4paper, 12pt]{scrartcl}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{mathptmx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{caption}
+\usepackage[labelformat=simple]{subcaption}
+\usepackage{wasysym}
+\usepackage{enumitem}
+\usepackage{titlecaps}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage{natbib}
+\setlength{\bibsep}{0.0pt}
+\renewcommand\thesubfigure{(\alph{subfigure})}
+% Strange fisita formatting
+\setkomafont{title}{\normalfont\bfseries}
+\addtokomafont{disposition}{\rmfamily}
+\setkomafont{section}{\large\bfseries\MakeUppercase}
+\setkomafont{subsection} {\underline}
+\setkomafont{subsubsection}{\large\bfseries}
+
+\setlist[description]{font={\bfseries\rmfamily}
+}
+
+\makeatletter
+\renewcommand{\@seccntformat}[1]{}
+\makeatother
+
+\definecolor{red}{RGB}{228,26,28}
+\definecolor{class2}{RGB}{55,126,184}
+\definecolor{green}{RGB}{77,175,74}
+
+% Begin the LaTeX document
+\begin{document}
+\setlength{\parindent}{0ex}
+% Paper Title
+\title{\vspace{-2cm}
+	\begin{flushleft}
+	{\normalsize\textbf{EB2019-IBC-009}
+	}\\ \vspace{.5cm}
+	\large \uppercase{Analysis of Big Data Streams to obtain Braking Reliability Information for Train Protection systems}
+	\end{flushleft}
+	}
+
+% Authors List
+\author{\normalsize	
+	Pfaff, Raphael*, Elsen, Ingo, Schmidt, Bernd \\ \normalsize	
+	FH Aachen University of Applied Sciences, Aachen, Germany %\\
+	%\normalsize \{pfaff, elsen, b.schmidt\}@fh-aachen.de
+	}
+\date{}
+% Author Affiliations
+% Create the title
+\maketitle
+
+% Abstract
+
+KEYWORDS - ETCS, braking curve, big data, performance prediction, condition monitoring
+\vspace{.2cm}
+
+ABSTRACT 
+
+Due to the long braking distance of railway systems and the high velocities achieved, railway operation needs to rely on train control systems. At the foundation of these systems are models to predict the motion of the trains, including their anticipated braking curve. Depending on the infrastructure manager, these braking curves need to be achieved with a given safety, which is typically in the rare event region of probabilities.
+
+In current settings, it is typical to develop these so called braking curves either by physical modelling of the train followed by a Monte Carlo simulation or following a heuristic approach, mostly based on the high level of safety over the past centuries.
+
+However, higher developed train protection and control systems, such as the European Rail Traffic Management System (ERTMS) or the Russian KLUB-U System together with current efforts towards quantitative risk analysis, e.g. the European Common Safety Methods, require a more formal approach to communicate the braking curve of a train between rolling stock and infrastructure.
+
+An a priori determined set of braking curves is feasible for trains running in fixed or a limited number of formations, such as multiple unit trains, however in the freight railway system due to its vast amount of different vehicles and possible train setups, the determination of the braking curves is prohibitive.
+
+
+\section{Introduction}
+\subsection{\titlecap{Railway system operation}}
+%BM235
+The key differences between road and rail traffic relevant to this work are the different physical properties of the interface between vehicle and fixed infrastructure:
+\begin{itemize}
+ \item The \emph{wheel-rail contact} between steel contact partners contributes largely to the energy efficiency of rail transport by reducing flexing work of tyres or wheels, but it also results in a very low adhesion coefficient $\mu$, resulting in longer braking distances. 
+ \item The \emph{track guiding} of wheels allows formation of trains which is also an advantage of the railway system, as it reduces labour cost, infrastructure usage and energy consumption of the trains. Depending on infrastructure constraints and maximum allowable forces on couplers, trains of up to 6000 m length are formed. The case under consideration assumes a European setting, limiting the maximum train length in most parts of the network to 740 m \cite{tsiinf}.
+\end{itemize}
+Both properties of rail transport result in higher possible payload and higher speeds than road traffic.
+
+As high speeds and high payloads go along with long braking distances special technical or organisational safety measures
+need to be taken to ensure that the track in front of the train is \emph{safely locked, reserved and free from obstacles}
+up to the endpoint of the current movement authority (e.\,g. next signal or next station).\\
+This also includes keeping distances
+between trains (the previous train train on the same track is an obstacle), which is illustrated in figure \ref{fig:DistanceKeeping}.
+%\begin{wrapfigure}{R}{8cm}
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+% Top of rail
+\draw[] (-2, -.15) -- (5, -.15);
+% Distances
+\draw[] (0, -.25) -- (0, -1.5);
+\draw[] (2.5, -.25) -- (2.5, -1.5);
+\draw[] (1.125, -.25) -- (1.125, -.8);
+\draw[] (2, -.8) -- (2, -1.5);
+\draw[<->] (1.125, -.7) -- (2.5,-.7) node[pos = 0.5, above] {$s_{b,1}$};
+\draw[<->] (0, -1.4) -- (2,-1.4) node[pos = 0.5, above] {$s_{b,2}$};
+\draw[<->] (2, -1.4) -- (2.5,-1.4) node[pos = 0.5, above] {$S$};
+\begin{scope}[scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\begin{scope} [shift = {(3,0)}, scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\end{tikzpicture}
+\subcaption{Operation in relative braking distance}
+\label{fig:RelBakDist}
+\end{center}
+\begin{center}
+\begin{tikzpicture}
+% Top of rail
+\draw[] (-2, -.15) -- (5, -.15);
+% Distances
+\draw[] (0, -.25) -- (0, -.8);
+\draw[] (2, -.25) -- (2, -.8);
+\draw[] (4.375, -.25) -- (4.375, -.8);
+\draw[] (2.5, -.25) -- (2.5, -.8);
+\draw[<->] (2.5, -.7) -- (4.375,-.7) node[pos = 0.5, above] {$l_{t,1}$};
+\draw[<->] (0, -.7) -- (2,-.7) node[pos = 0.5, above] {$s_{b,2}$};
+\draw[<->] (2, -.7) -- (2.5,-.7) node[pos = 0.5, above] {$S$};
+\begin{scope}[scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\begin{scope} [shift = {(4.375,0)}, scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\end{tikzpicture}
+\subcaption{Operation in absolute braking distance}
+\label{fig:AbsBakDist}
+\end{center}
+\begin{center}
+\begin{tikzpicture}
+% Top of rail
+\draw[] (-2, -.15) -- (6, -.15);
+% Distances
+\draw[] (0, -.25) -- (0, -.8);
+\draw[] (1.5, -.25) -- (1.5, -.8);
+\draw[] (3, -.25) -- (3, -.8);
+\draw[] (5.375, -.25) -- (5.375, -.8);
+\draw[] (3.5, -.25) -- (3.5, -.8);
+\draw[<->] (3.5, -.7) -- (5.375,-.7) node[pos = 0.5, above] {$l_{t,1}$};
+\draw[<->] (0, -.7) -- (1.5,-.7) node[pos = 0.5, above] {$s_{b,max}$};
+\draw[<->] (3, -.7) -- (3.5,-.7) node[pos = 0.5, above] {$S$};
+\draw[<->] (1.5, -.7) -- (3,-.7) node[pos = 0.5, above] {$l_{bl}$};
+%Signals
+\draw (1.5, 0) -- (1.5, .4) node[circle, draw, fill = gray, opacity = .5, above, inner sep = 2pt] {};
+\draw (3, 0) -- (3, .4) node[circle, draw, fill = gray, opacity = .5, above, inner sep = 2pt] {};
+\begin{scope}[scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\begin{scope} [shift = {(5.375,0)}, scale = 0.15]
+	\input{tikz/train.tex}
+\end{scope}
+\end{tikzpicture}
+\subcaption{Operation in fixed spatial distance}
+\label{fig:AbsSpacDist}
+\end{center}
+\caption{Methods for maintaining train distances}
+\label{fig:DistanceKeeping}
+\end{figure}
+
+In this figure, $s_{b,i}$, $i = 1,2$, denotes the braking distance of train $i$, $t_{l, i}$ the train length and $S$ is a safety margin train. Approach \subref{fig:AbsSpacDist} is the one frequently chosen, as it easily includes checking also the two other condition of reservation and safe locking of moveable elements as crossings, switches/points or movable bridges.
+Obviously it is a rather inefficient approach in terms of infrastructure utilisation, with its performance being limited by the block length $l_{bl}$, especially if block length is not properly chosen according to dynamics of vehicle movement. 
+
+The more performant approach \subref{fig:AbsBakDist} is technologically more demanding since it requires exact and safe position information of the the trains as well as a vehicle side ensurance of train integrity. In this approach, the following train maintains a distance that allows it to stop behind the current end of the leading train. This approach is rarely applied in mainline operation, as it \emph{does not} bring any additional capacity if switches/points or trains with different speeds are involved, but may help in some mass transit applications to increase network capacity \cite{pachl2011systemtechnik} by up to 15\%. 
+
+Approach \subref{fig:RelBakDist} is theoretically the most performant of the presented approaches and it resembles road transportation on highways. In this scenario, trains are operated such that the following train can stop behind the leading train assuming its deceleration by braking. As can be assumed from the similarity to road transportation, rear-end collisions are prone to be more likely when operating in relative braking distances. The additional capacity is neglectable especially as the bottlenecks in \emph{real world operations} are either speed differences of trains, fixed points as switches or passenger dwell times in stations. 
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[scale = 0.6]
+
+
+\fill[draw=black,color=green!40!] (-5,-0.68) rectangle (-4,-1.12)(-4,-1.1) rectangle (-1.5,-2.35)(-1.5,-2.3) rectangle (2,-3.9)(2,-3.85) rectangle (4,-4.7)(4,-4.65) rectangle (5,-5.02);
+\fill[draw=black,color=red!40!] (-5,-0.4) rectangle (-4,-0.68)(-4,-0.6) rectangle (-1.5,-1.05) (-1.5,-1.0) rectangle (2,-1.6)(2,-1.55) rectangle (4,-1.9)(4,-1.8) rectangle (5,-2.05);
+\fill[draw=black,color=red!40!] (-5,-3.85) rectangle (-4,-4.1)(-4,-4) rectangle (-1.5,-4.4) (-1.5,-4.35) rectangle (2,-4.9)(2,-4.85) rectangle (4,-5.2)(4,-5.1) rectangle (5,-5.35);
+
+\draw[->] (-5,0)--(-5,-6) node[pos = 0.5, left] {Time/min} ;
+\draw[dashed] (-4,0)--(-4,-6)  (-1.5,0)--(-1.5,-6) (2,0)--(2,-6) (4,0)--(4,-6)(5,0)--(5,-6);
+\draw[->] (-5,0)--(5.5,0) node[pos = 0.5, above] {Distance/km} node[pos = 0.0, above] {Station A} node[pos = 1.0, above] {Station B} ;
+
+
+\draw[color=green, thick] (-5,-0.75)node[left] {Local service}--(-3,-1.5)--(-3,-1.75)--(1,-3.25)--(1,-3.5)--(5,-5) ;
+\draw[color=red, thick] (-5,-0.5)--(5,-2) node[right] {Fast service};
+\draw[color=red, thick] (-5,-3.9)--(5,-5.3) node[right] {Fast service};
+
+\draw[color=green, dashed]  (-5,-0.7)--(-4,-0.7)  (-5,-1.12)--(-4,-1.12);
+\draw[color=red, dashed]  (-5,-0.68)--(-4,-0.68)(-5,-0.4)--(-4,-0.4);
+
+%\draw
+\end{tikzpicture}
+\end{center}
+\caption{Safely locked, reserved and free sections with technical delays neglected}
+\label{fig:blocks}
+\end{figure}
+As can easily be derived from a typical example in figure \ref{fig:blocks} even with the most sophisticated system in place, there would never fit an additional train on this line.
+The reason is, that the train graphs are already too close to each other at the stations A and B, even if there is lots of free capacity left (white areas) in each block section. 
+%Anyway the capacity of an railway line can be defined as megatons per hour\footnote{Also passengers or seats may translated to a mass in tons based on vehicle properties.}.
+\subsection{\titlecap{Train Protection or Train Automation Systems}}
+%ETCS \neq LZB
+In order to maintain the ability to stop before the end of movement authority (that means end of the free, reserved and locked track section) the train driver (or the trainborne computer in case of automatic train operations) needs to get informed about 
+location of this endpoint as well as about speed restrictions on the track before. This information may be transmitted by track side signals (e.\,g. home, distance or speed signals) or in case of higher velocities or special operational setups by use of cab signaling. As collisions are not acceptable due to high costs and possible loss of human life and not only human train drivers but also computers may fail, there must be a train protection in place, which enforces application of brakes in case of risky behaviour (the so called penalty brake). According to their type of information transfer, it is possible to distinguish between
+ \begin{itemize}
+	\item spatially discrete acting systems
+	\item spatially continuous acting systems
+	\item spatially mixed systems
+\end{itemize}
+\emph{Discrete acting systems} are installed by putting some transmitters at selected points of the line, mostly in braking distance before dangerous points 
+(e.\,g. switches/points, next track section) in order to guarantee safety for these dangerous points and can be used to transfer information to the vehicle. This information can be the permitted speed, whether or not there is an authority for movement ahead or similar information. It is then possible for the vehicle to react appropriately, e.g. by applying the brakes. While these systems are a means to increase safety in the railway system, they are not suitable for assisted or automatic operation, as issuing of a movement authority \emph{cannot} be communicated \emph{before} passing the transmitter. \\
+
+\noindent\emph{Spatially continuous systems} use means of communication that are available everywhere along the railway line and not only at discrete transmitter positions.
+This may be realised by using extra track-sided wire loops, coded track circuits or some kind of radio transmissions such as GSM-R. With continuous train protection systems it is possible to shift towards an increasing automation of the railway system. This becomes especially true, if trackside communication has been chosen. As latencies of radio based systems (e.\,g. ETCS Level 2 and 3) are much higher ($>$1\,s) and the radio channel may get subject to shading and fading, train positions will historic by some seconds and therefore, as the train has moved, inaccurate by ($>$85\,m) in case of high speed operations. Trackside continuous communication systems have been successfully deployed by several high speed and metro operators for fully automated operations in closed environments (e.\,g. subways with platform doors, fenced high speed lines)
+normally delivering a good performance compared to average human train drivers. But well skilled human train drivers perform better, as they may take current rail and vehicle conditions (e.\,g. humidity, temperature) and possible risk and timetable into consideration and therfore may accelerate or decelerate faster based on their experience. To be able to learn from them, a more detailled modelling of the braking procedure is needed.
+
+\section{Braking Models}
+\subsection{\titlecap{Introduction}}
+For operation in fixed spatial distance it is possible to consider the braking performance of the train and existing gradients to calculate the maximum permissible speed for each part of the line to be travelled. This is typically done in Europe based on the so called braked weight percentages. 
+
+For operation under continuous train control, typically traveling at higher velocities, the use of a more distinguished braking model is of advantage. During homologation of the train, the safe braking retardation $a_{\text{safe}} = a_{\text{safe}}(v)$ is recorded as a function of the velocity \cite{gropler2008bremswege}.
+
+From the infrastructure side of the railway system, the track gradient is known and the resulting acceleration of the train can be calculated and recorded in a database, denominated $a_{\text{grad}} = a_{\text{grad}}(s)$, a function of the distance.
+
+%%\begin{figure}
+%%\begin{center}
+%%\begin{tikzpicture}
+%%\begin{axis}[
+%%	name=main plot,
+%%	xlabel=$v/ \mathrm{ms^{-1}}$,
+%%	ylabel=$a_{\text{sb}}/ \mathrm{ms^{-2}}$,
+%%	xmin = 0, ymin = 0, ymax = 1.2, xmax = 55.5, height = 3cm, width = 7cm,
+%%	]
+%%\addplot table[x=V, y=A, mark = none] {DecelerationProfile.dat};
+%%\end{axis}
+%%%\end{tikzpicture}
+%%%\begin{tikzpicture}
+%%\begin{axis}[
+%%	 at={(main plot.below south west)},yshift=-0.1cm,
+%%	 anchor=north west,
+%%	xlabel=$s / \mathrm{m}$,
+%%	ylabel=$v/ \mathrm{ms^{-1}}$,
+%%	ymin = 0, xmin = 0, xmax = 3000,
+%%	height = 5cm, width = 7cm,
+%%	legend entries={$\mathcal{C}_{1.0}$,$\mathcal{C}_{0.9}$,$\mathcal{C}_{0.7}$},
+%%	mark repeat=10,mark phase=7
+%%	]
+%%\addplot[thick, black] table[x=S, y=V, mark = none] {BrakingCurve.dat};
+%%\addplot[thick, blue, mark = none, dashed] table[x=S1, y=V1] {BrakingCurve.dat};
+%%\addplot[thick, red, mark = none, densely dotted] table[x=S2, y=V2] {BrakingCurve.dat};
+%%\end{axis}
+%%\begin{axis}[
+%%		at={(main plot.below south west)},yshift=-0.1cm,
+%%	 anchor=north west,
+%%		ylabel near ticks, yticklabel pos=right,
+%%		ylabel=$i/ \permil$,
+%%		 axis x line=none, 
+%%		xmin = 0, xmax = 3000,
+%%		height = 5cm, width = 7cm]
+%%\addplot table[x=S, y=I, mark = none] {RouteProfile.dat};
+%%\end{axis}
+%%\end{tikzpicture}
+%%\caption{Braking Curves $\mathcal{C}_{k}$ for $k \,a_{\text{sb}}$ available service brake deceleration on a given route profile with gradient $i$}
+%%\label{Fig:BrakingCurves}
+%%\end{center}
+%%\end{figure}
+%%
+%%In Figure \ref{Fig:BrakingCurves}, a set of braking curves $\mathcal{C}_{k}$ for the service brake is depicted for different levels of availability of the service brake. The resulting braking curves obviously vary widely, partly due to the train at $\mathcal{C_{0.7}}$ reaching the negative slope a $s = 2000$ on its trajectory.
+%
+%\begin{figure*}[!htb]
+%\begin{center}
+%\includegraphics[width = 0.9\textwidth]{TrainBPDiagram}
+%\caption{Train with pneumatic automatic brake}
+%\label{Fig:TrainBP}
+%\end{center}
+%\end{figure*}
+%
+%The braking system of freely configurable train consist is designed as a distributed system, with the command line also supplying pneumatic energy to the brakes along the train. These typically consist of one distributor valve per carriage or wagon and up to 12 brake actors, i.e. brake cylinders and calipers. Figure \ref{Fig:TrainBP} depicts a train setup with brake components.
+
+The braking system of the carriages or wagons is checked qualitatively at least once every 24 h, however efficiency may vary considerably over the maintenance interval. Further, plenty of instantaneous error modes may inhibit the proper generation of a braking force by one or more actuators. This makes it necessary to consider the variation of braking distance due to these effects in the train protection system, which is achieved and communicated by help of braking curves. 
+
+The random and systematic dispersion of braking performance needs to be handled according to the infrastructure composition, e.g. for infrastructure and operations providing long headways of the reliability of the braking distance prediction is not required to be as high as for dense traffic and little headway.
+
+For a limited number of train formations, such as multiple units, the braking curve is derived from white box modelling of the braking system. Dominating parameters to be considered are:
+\begin{itemize}
+	\item Brake pipe: propagation velocity, flow resistances, train length
+	\item Distributor valve: Filling time, brake cylinder pressure
+	\item Braking force generation: efficiency, brake radius, pad/block friction coefficient
+	\item Wheel/rail contact: rail surface, contaminants, slip
+ 	\item Discrete failure modes \cite{tsilocpas}
+\end{itemize} 
+The braking curve is obtained by running Monte Carlo simulations of the unit and the limited number of multiple traction formation it may operate in. 
+This is only feasible for trains running limited formations due to the high number of simulations necessary to provide the braking curve with sufficient certainty for the rare event levels associated with the hazards such as signal passed at danger.
+
+Since the amount of headway determines the utilisation of the infrastructure, it is desirable to operate trains with as short distances as possible. This may be achieved on the one hand by more reliable predictions of the braking distance and on the other hand by a shift from the current block system as depicted in Figure \ref{fig:AbsSpacDist} towards a moving block system as in Figure \ref{fig:RelBakDist}.
+
+At this stage of operation the safety is under joint responsibility of railway undertaking and infrastructure manager, thus the confidence level required by the infrastructure is communicated to the rolling stock (ETCS onboard unit) as well as a weighting factor to increase the predicted braking distances in case of wet rails. The ETCS onboard unit is then able to use the appropriate braking curve \cite{ERAbrakingcurves}.
+
+\subsection{\titlecap{Current treatment of trains}}
+As in the fixed block system the variation of braking performance did not play as significant a role as in the moving block system, for legacy rolling stock only the nominal braking performance was evaluated during commissioning. The nominal braking performance for freely configurable trains is typically recorded in terms of the braked weight percentage $\lambda$ \cite{uic544-1} while for multiple units and especially high speed trains, a series of retardation values along the braking curve is recorded and used to predict the braking curve.
+
+Due to this treatment of trains, the class of freely configurable rolling stock is termed $\lambda$-braked, whereas the class of multiple units for which retardation values are recorded is termed $\gamma$-braked. As opposed to the $\gamma$-value, $\lambda$ has no direct physical meaning but offers a high degree of usability, as the braking performance of a train can be easily calculated by summation of the braked weights of the individual wagons or coaches.
+
+With Figure \ref{Fig:BrakingCurves} in view, it is more obvious how to calculate a braking curve originating from retardation values over a velocity interval. Further it is not feasible to use the same Monte Carlo approach as for multiple units, since the amount of permissible train configurations from a set of wagons for most railway undertakings in far too high to be calculated in advance.
+
+The European Railway Agency has conceived an approach that based its prediction on the braked weight percentages of the train, based on tests with with a large variety of trains \cite{ERAbrakingcurves}. It may be expected that the trains employed for testing are selected to be representative of the maintenance and technical status of freight wagons. For this reason, trains made up of uniform wagon type which are well maintained and of current design may be treated disadvantageously. Further, the feasible amount of train testing is obviously limited compared to the confidence levels typically required by train protection systems which are in the range $\alpha = 10^{-6} \ldots 10^{-9}$.
+
+\section{Big Data and Big Data Streams}
+\subsection{\titlecap{Introduction}}
+In the present research on usage of Big Data in the railway system, mostly two areas are considered to gain advantage from Big Data Usage, which is on the one hand condition based maintenance, e.g. \cite{fumeo2015condition, thaduri2015railway, elsen:Cray}. The potential for savings by optimising maintenance is high in the railway business, as the lifecycle of vehicles is long and thus the maintenance cost is typically higher than the initial investment.
+
+On the other hand, prediction of operational status as well as optimisation of railway operation, as in e.g. \cite{papa2016delay, oneto2016delay, elsen:ISC17}, are fields were the data integration may be put to service profitably.
+
+This paper deals with the interface between these two: The results of the analysis of variations in braking performance are employed to optimise operational performance of railways, however on a single wagon level which is less abstract than in pure operational approaches. At the same time, the recorded retardation data  provides insight into the maintenance state of the individual wagon, but without looking into single components.
+
+\begin{table}  
+	\begin{center}  
+	\caption{Number of operated trains by DB Cargo in Germany in 2016}
+	\label{Tab:Zugfahrten}
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{Month}	& \textbf{Freight trains operated} \\ \hline
+		February & 2,641,295 \\ \hline
+		March & 2,712,662 \\ \hline
+		April & 2,734,730 \\ \hline
+		May & 2,497,157 \\ \hline
+		June & 2,719,753 \\ \hline
+		July & 2,576,785 \\ \hline
+		August & 2,472,119 \\ \hline
+		September & 2,660,830 \\ \hline
+		October & 2,513,284 \\ \hline
+		November & 2,641,139 \\ \hline 
+	\end{tabular}
+	\end{center}
+\end{table}
+
+The determination of Big Data is often Based on the "V's"' of Big Data \cite{hilbert2016big}. While there are sometimes different sets of the V's, they all share in common
+\begin{description}
+	\item[Volume:] quantity of stored and generated data 
+	\item[Variety:] type and nature of the data
+	\item[Velocity:] speed at which the data is generated
+	\item[Veracity:] quality of the captured data
+\end{description}
+It is obvious that PetaBytes of Volume of data can be considered to belong into the realm of Big Data, but it is far more often the combination of the Vs that qualifies a problem as a Big Data problem.
+
+For the example application presented in this paper, the DB Cargo open data set \cite{DBOpenDataZug} is analysed for the number of freight trains operated (cf. Table \ref{Tab:Zugfahrten}). DB Cargo operates on average 2.6 million freight trains per month. Assume 10 braking processes per train made up of 20 wagons and the braking deceleration sampled at 10Hz during the typical braking time of approximately 90s. This leads to $486\cdot 10^9$ datapoints per month. At 20 bytes per sample, this yields 9.4TB of data per month. Since freight trains are operated mostly at night, assume 360 operational hours per month to calculate the peak data rate of 7.2MB/s. While this data rate is not huge compared to other applications, its real time processing will enable to react quickly within the ETCS framework on any deterioration of braking performance.
+
+The quantity of data for DB Cargo alone will amount to approximately 100TB (and $>5.8\cdot 10^{12}$ datapoints) per year, which can be extrapolated by DB market share of 62\% to approximately 150TB per year for all freight railway undertakings in Germany. Since one peculiarity of the freight rail system is that some wagons run very frequently while others are rarely operated, this dataset needs to be kept accessible and shared between the operators in order to obtain  information on past performance of a wagon.
+
+On top of that, there is the requirement not only to store the data -- including burst transfers during on-line transmission of data -- but also for a real time prediction of potentially critical situations.
+
+\subsection{Processing slow and fast data}
+As has been shown in \cite{elsen:M318} similar requirements are encountered when performing real-time arrival predictions for trains. The architecture is based on the Lambda--Architecture pattern \cite{Marz2015}
+
+While the data generated during operation is required to be processed with sub-second latency\footnote{The operation requirement is still in the range of a few seconds, but this includes the complete data flow.}, every date must be stored and is used as input to the machine learning algorithms. This ensures, that data analysis, classifiers and predictors operate on the most recent dataset possible. The real-time processing in the Streaming Layer of the Lambda-Architecture relies on a stream-processing framework (Apache Storm, for higher latencies, Apache Spark would be possible, too), the preparation of the datasets for training of the ML algorithms or analyzing a large dataset takes advantage of the Batch-Processing Layer using well known Hadoop--Tools like Hive and HBase or straigt forward implementations using the well known MapReduce algorithm \cite{Dean:2004:MSD:1251254.1251264}
+
+\section{Approach to braking performance monitoring}
+\subsection{\titlecap{Introduction}}
+Following the above arguments, a precise prediction of braking distances is highly desirable for performance reasons. The typical freight wagon does not have power supply nor sensors. The sensible step to equip freight wagons with sensing, processing and connecting capabilities was proposed under the term \textit{Wagon 4.0} in \cite{pfaff2017stephenson}. The Wagon 4.0 makes sensing and data collection economically viable. Further it is open for further developments due to the introduction of an operating system, making the functionality described in the sequel work like a mobile phone app.
+
+In order to keep hardware invest low and onboard technology simple, only accelerometer data is assumed to be known to the algorithm. Each wagon can be identified uniquely thanks to its wagon number. The wagons in a train can, besides some longitudinal dynamic effects, only experience the same deceleration despite different braking performance.
+
+\subsection{\titlecap{Proposed algorithm}}
+The algorithm to estimate the standard deviation of the braking performance is assumed to receive as an input the braking deceleration of the individual wagon. This could be achieved by e.g. using Kalman Filtering of the sensor data, possibly improved by information on the wagon weight to improve the dynamic model.
+
+The wagon fleet data is managed in key-value-pairs $<k, v>$, the key $k$ being the unique wagon identification number and the value vector $v = \left(\sigma, n\right)$ stores the estimated braking force $F_{B}$ and the number of observed braking processes $n$ for the wagon under consideration.
+
+The braking force is considered in terms of Bayesian statistics, since the Bayesian probability concept, which is based on belief and can be updated as new data arrives. In this framework, the braking performance of a given wagon is initialised with a prior $F_{B}$ and updated as new observations of the deceleration $a$ arrive.
+
+Based on the prior distribution and the current observation, the observed braking force of the $i$th wagons is calculated as 
+\begin{equation}
+F_{B, obs} =\frac{a}{m_{i}}
+\end{equation}
+followed by a Bayesian update of the distribution of $F_{B}$
+\begin{eqnarray}
+\sigma_{est}(k) &=& \alpha \sqrt{\frac{\sigma^2 \sigma_{est}(k-1)^2}{\sigma^2+\sigma_{est}(k)^2}}\\
+F_{B,est} &=& \frac{F_{B} \sigma^2 + F_{B, obs}*\sigma_{est}(k)^2}{\sigma^2+\sigma_{est}(k)^2} 
+\end{eqnarray}
+where $\sigma$ represents the measurement noise and $\alpha$ an alertness factor, reflecting the fact that the observed braking forces stem from train operation imposing a higher variance than the measurement noise alone.
+
+This updated standard deviation is then stored on the key value store until the next braking data arrives.
+
+In terms of a MapReduce implementation of the proposed algorithm, this can be achieved in the following fashion:
+\begin{enumerate}
+	\item Map: 
+	\begin{itemize}
+		\item Incoming data is mapped to the individual train, using data from a second key value data storage $<k, t>$, where $k$ is the unique wagon ID and $t$ is the number of the train the wagon currently operates in.
+		\item The train number $t$ serves as an output key, allowing to group all data corresponding to one train.
+		\end{itemize}
+	\item Shuffle: The worker nodes redistribute the data based on output keys such that all data belonging to one output key is located on one node.
+	\item Reduce: 
+	\begin{itemize}
+		\item For each $<k, v>$, the Bayesian update is performed and the key value storage is updated accordingly.
+		\end{itemize}
+\end{enumerate}
+
+\subsection{\titlecap{Numerical example}}
+The algorithm as described above has been executed with a small data set of $N = 5 \cdot 10^4$ wagons, representing about half of DB's fleet and trains of $n = 20$ wagons each. Out of this wagon pool, $M = 83.3 \cdot 10^4$ trains (one average day of train freight train operation) are assembled randomly and operated, with $m = 5$ braking processes observed from each train. The $<k,v>$ data storage is initialised with the conservative prior exhibiting a mean value representing 50\% of the true braking force and a standard deviation increased by a factor of 10, yielding a less reliable braking force.
+
+Each wagon has a mass and a braking force $F_{b}$ resulting from the brake block friction coefficient, the brake rigging efficiency and the nominal brake force. The resulting brake force of each wagon is simulated to be varying following a normal distribution having a standard deviation which is itself uniformly drawn from the interval $\left[0, \sigma_{max}\right]$, where $\sigma_{max} = 0.05 F_{b}$.
+
+The resulting braking deceleration is calculated for each of the virtually operated trains, then the observed deceleration $\hat{a}$ is calculated and additive white noise having a standard deviation $\sigma_{a} = 0.1\hat{a}$ is added. 
+\centering
+\begin{figure}
+\begin{minipage}[t]{0.45\textwidth} 
+\includegraphics[width = \textwidth]{190121FleetEstimate}
+\captionof{figure}{Comparison of estimated and true braking force (above), number of observed braking processes (below.)}
+\label{Fig:BrakingF}
+\end{minipage}
+\begin{minipage}[t]{0.1\textwidth} 
+
+\end{minipage}
+\begin{minipage}[t]{0.45\textwidth} 
+\includegraphics[width = \textwidth]{190121Errors}
+\captionof{figure}{Convergence of mean errors on fleet and train level}
+\label{Fig:BrakingError}
+\end{minipage}
+
+\end{figure}
+
+The MapReduce algorithm as described above is executed after each braking process, with $\alpha = 5$. The results are plotted in Figure \ref{Fig:BrakingF}, showing an appropriate convergence of the estimated force from the conservative prior  towards the true values. In Figure \ref{Fig:BrakingError}, the reduction of the errors on both fleet and train level of the iterations of the algorithm is depicted. The error converges on a positive values, indicating a still conservative prediction.
+
+\section{\titlecap{Conclusion and further work}}
+The problem of stochastic behaviour of braking performances of railway rolling stock was reviewed and put into the context of train protection systems as well as performance. The amount of data to be expected in such applications exclusively for monitoring of the braking system is determined, with the amount for this application being within a feasible dimension, however requiring appropriate data structures and algorithms.
+
+An algorithm for the estimation of individual wagons braking performance variance from observed deceleration was proposed and formulated in the MapReduce framework, making possible to scale the software for real world applications. A numerical study shows that the algorithm converges towards the true values for a conservative prior.
+
+The algorithm as well as the numerical study did not consider the expected value of the braking performance to be varying over time, however especially considering the typical 6 to 8 year maintenance interval and the operational conditions, such variations over time do occur and provide additional insight into the maintenance condition of the rolling stock, therefore an inclusion in future development steps appears desirable.
+
+Future amendments to the proposed procedure will include more data from various sources such as weather and position, in order to devise algorithms for brake control mimicking the human driver as closely as possible.
+
+
+% Bibliography
+% ---------------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{./EB2019-IBC-009}
+
+\end{document}
+

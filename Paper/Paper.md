@@ -80,7 +80,13 @@ The preparation of coupling and separation points enables faster train dispatch 
 
 ## Potential Benefits for Heavy Haul
 
-### Condition Monitoring and Maintenance (Julian)
+### Condition Monitoring and Maintenance
+
+In order to increase the attractiveness of rail freight transport, it is necessary to reduce the life cycle costs of rail vehicles. An instrument to achieve lower life cycle costs is the use of intelligent forms of maintenance. Figure 1 shows an example of a simplified process for intelligent forms of maintenance from a formal point of view (see [1]). As the following section shows, the as described above freight wagon4.0 provides the appropriate equipment to handle the aspects of the process. 
+
+The equipment of the vehicle with sensor solutions for monitoring the components is the basis for the acquisition of data. The generated data must be transformed into a form suitable for further analysis, e.g. by averaging or standardization. In predictive maintenance, data analysis usually consists of the short-term detection of anomalies or the detection of a wear trend in the operating data of the monitored component in order to predict the time of failure. Especially for the preprocessing and the analysis of the data an intelligence and computing power is necessary, which the freight wagon 4.0 provides as a distributed resource.
+The decision for an appropriate action completes the process of intelligent maintenance. The decision is often made on the basis of the current state of technology and expert knowledge, i.e. the human being in the process. In this case, the freight wagon4.0 does not have the task of autonomous derivation of maintenance activities, but rather to support the maintenance decision making for the present situation.
+From the point of view of data analysis techniques, the procedure described above corresponds to predictive analysis and pursues the question of what will happen if a detected wear trend continues. The next evolutionary form of data analytics called prescriptive analytics, attempts to answer the question of what is best that can happen. It quickly becomes clear that the integration of this form of analytics into operators' maintenance strategies means an even greater complexity, since not only one action but many possible actions are considered and the best maintenance alternative must be selected from these possibilities within the framework of a highly complex optimization problem [2]. Nevertheless, the distributed intelligence of the freight wagon4.0 as well as the data continuity related to the overall system of systems and not to the individual vehicle itself, form a basis for the research of prescriptive maintenance approaches.
 
 ### Remote Train Christening and Brake Calculation (Daniela, Raphael)
 Since each wagon carries a lot of information about itself and knows its neighbours, train christening and the calculation of the brake percentage and thus the required brake position and maximum speed is simplified.
@@ -90,9 +96,13 @@ Since each wagon carries a lot of information about itself and knows its neighbo
 ### Traction Boost Operation (Bernd, Raphael)
 
 ### ep-Assisted Braking (Raphael, Daniela)
+
 For the concept of the ep-assisted brake, individual wagons in the train must be equipped with it. An electro-pneumatic transmission of the brake command allows it to be executed faster and the wagons wear out more slowly due to fewer drives onto the previous wagons. In addition, a test introduction is good for shortening braking distances.
 
 ## Conclusion
 
 ## References
 
+[1] Atamuradov, V., Medjaher, K., Dersin, P., Lamoureux, B., et al.: Prognostics and health management for maintenance practitioners - review, implementation and tools evaluation. Int. J. Prognostics Health Management. 8, 1–31 (2017)
+
+[2] Franzen, J., Kuhlenkötter, B.: Präskriptive Analyse im Kontext der Instandhaltung von Schienenfahrzeugen. In: Eisenbahntechnische Rundschau 12/2018, 64-66 (2018)
