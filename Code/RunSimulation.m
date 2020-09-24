@@ -3,8 +3,8 @@ clear all, close all, clc
 m = 90000;
 Fb = -1*m;
 RBD = 5; %Regelbetriebsdruck
-VBD = 3.5; %Vollbremsdruck
-tf = 4;
+VBD = 0; %Vollbremsdruck
+tf = 24;
 tl = .1;
 l = 18;
 c = 250;
@@ -24,7 +24,7 @@ tmax = 100;
 nmax = 200;
 t = linspace(0, tmax, nmax);
 %u = [5*ones(nmax/4,1); 3.5*ones(nmax/4,1); 5*ones(nmax/4,1); 3.5*ones(nmax/4,1)];
-u = [5*ones(nmax/4,1); 3.5*ones(3*nmax/4,1)];
+u = [5*ones(nmax/4,1); 0*ones(3*nmax/4,1)];
 simin.time = t;
 simin.signals.values = u;%[-300*ones(nmax,1)];
 
